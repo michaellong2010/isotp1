@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <time.h>
 
 #define CAN_MESSAGE_BYTE_SIZE 8
 #define MAX_ISO_TP_MESSAGE_SIZE 4096
@@ -26,6 +27,7 @@
 /* Private: Determines if by default, padding is added to ISO-TP message frames.
  */
 #define ISO_TP_DEFAULT_FRAME_PADDING_STATUS true
+#define ISO_TP_DEFAULT_FRAME_PADDING_VALUE 0x00
 
 #ifdef __cplusplus
 extern "C" {
@@ -45,11 +47,16 @@ extern "C" {
  * size -  The size of the payload. The size will be 0 if there is no payload.
  */
 typedef struct {
-    const uint32_t arbitration_id;
+    uint32_t tx_arbitration_id;
+    uint32_t rx_arbitration_id;
     uint8_t payload[OUR_MAX_ISO_TP_MESSAGE_SIZE];
     uint16_t size;
     bool completed;
     bool multi_frame;
+    uint8_t fc_status;
+    uint8_t blocksize;
+    uint8_t min_sep_time;
+    uint16_t seq_id;
 } IsoTpMessage;
 
 /* Public: The type signature for an optional logging function, if the user
@@ -70,6 +77,7 @@ typedef void (*LogShim)(const char* message, ...);
  */
 typedef bool (*SendCanMessageShim)(const uint32_t arbitration_id,
         const uint8_t* data, const uint8_t size);
+typedef bool (*RecvCanMessageShim)( uint32_t *prcv, uint8_t *prcv_len, uint8_t *data );
 
 /* Public: The type signature for a... TODO, not used yet.
  */
@@ -116,8 +124,10 @@ typedef void (*IsoTpCanFrameSentHandler)(const IsoTpMessage* message);
 typedef struct {
     LogShim log;
     SendCanMessageShim send_can_message;
+    RecvCanMessageShim recv_can_message;
     SetTimerShim set_timer;
     bool frame_padding;
+    uint8_t padding_value;
 } IsoTpShims;
 
 /* Private: PCI types, for identifying each frame of an ISO-TP message.
@@ -141,4 +151,24 @@ typedef enum {
 }
 #endif
 
+#define millis() ( ( clock () * 1000 ) / CLOCKS_PER_SEC )
+#define TIMEOUT_SESSION  500 /* Timeout between successfull send and receive */
+#define TIMEOUT_FC       250 /* Timeout between FF and FC or Block CF and FC */
+#define TIMEOUT_CF       250 /* Timeout between CFs                          */
+#define MAX_FCWAIT_FRAME  10   
+#define ISOTP_FC_CTS  0   /* clear to send */
+#define ISOTP_FC_WT 1     /* wait */
+#define ISOTP_FC_OVFLW  2 /* overflow */
+
+typedef enum {
+  ISOTP_IDLE = 0,
+  ISOTP_SEND,
+  ISOTP_SEND_FF,
+  ISOTP_SEND_CF,
+  ISOTP_WAIT_FIRST_FC,
+  ISOTP_WAIT_FC,
+  ISOTP_WAIT_DATA,
+  ISOTP_FINISHED,
+  ISOTP_ERROR
+} isotp_states_t;
 #endif // __ISOTP_TYPES__

@@ -31,6 +31,8 @@ typedef struct {
     IsoTpMessageSentHandler message_sent_callback;
     IsoTpCanFrameSentHandler can_frame_sent_callback;
     // TODO going to need some state here for multi frame messages
+    isotp_states_t tp_state;
+    uint16_t tranceiver_bytes;
 } IsoTpSendHandle;
 
 /* Public: Initiate sending a single ISO-TP message.
@@ -53,7 +55,8 @@ typedef struct {
  * multi-frame messages. The 'completed' field in the returned IsoTpSendHandle
  * will be true when the message is completely sent.
  */
-IsoTpSendHandle isotp_send(IsoTpShims* shims, const uint16_t arbitration_id,
+IsoTpSendHandle isotp_send(IsoTpShims* shims, const uint16_t tx_arbitration_id,
+        const uint16_t rx_arbitration_id,
         const uint8_t payload[], uint16_t size,
         IsoTpMessageSentHandler callback);
 

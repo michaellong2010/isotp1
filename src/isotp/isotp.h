@@ -22,6 +22,7 @@ extern "C" {
  */
 IsoTpShims isotp_init_shims(LogShim log,
         SendCanMessageShim send_can_message,
+        RecvCanMessageShim recv_can_message,
         SetTimerShim set_timer);
 
 /* Public: Render an IsoTpMessage as a string into the given buffer.

@@ -7,12 +7,14 @@
 /* } */
 
 IsoTpShims isotp_init_shims(LogShim log, SendCanMessageShim send_can_message,
-        SetTimerShim set_timer) {
+        RecvCanMessageShim recv_can_message, SetTimerShim set_timer) {
     IsoTpShims shims = {
         log: log,
         send_can_message: send_can_message,
+        recv_can_message: recv_can_message,
         set_timer: set_timer,
-        frame_padding: ISO_TP_DEFAULT_FRAME_PADDING_STATUS
+        frame_padding: ISO_TP_DEFAULT_FRAME_PADDING_STATUS,
+        padding_value: ISO_TP_DEFAULT_FRAME_PADDING_VALUE
     };
     return shims;
 }
@@ -20,7 +22,7 @@ IsoTpShims isotp_init_shims(LogShim log, SendCanMessageShim send_can_message,
 void isotp_message_to_string(const IsoTpMessage* message, char* destination,
         size_t destination_length) {
     snprintf(destination, destination_length, "ID: 0x%" SCNd32 ", Payload: 0x%02x%02x%02x%02x%02x%02x%02x%02x",
-            message->arbitration_id,
+            message->tx_arbitration_id,
             message->payload[0],
             message->payload[1],
             message->payload[2],

@@ -25,7 +25,8 @@ typedef struct {
     bool success;
 
     // Private
-    uint32_t arbitration_id;
+    uint32_t tx_arbitration_id;
+    uint32_t rx_arbitration_id;
     IsoTpMessageReceivedHandler message_received_callback;
     uint16_t timeout_ms;
     // timeout_ms: ISO_TP_DEFAULT_RESPONSE_TIMEOUT,
@@ -33,6 +34,11 @@ typedef struct {
     uint16_t received_buffer_size;
     uint16_t incoming_message_size;
     // TODO timer callback for multi frame
+    uint8_t fc_status;
+    uint8_t blocksize;
+    uint8_t min_sep_time;
+    isotp_states_t tp_state;
+    uint32_t wait_cf;
 } IsoTpReceiveHandle;
 
 /* Public: Initiate receiving a single ISO-TP message on a particular
@@ -51,8 +57,8 @@ typedef struct {
  * arrives. The 'completed' field in the returned IsoTpReceiveHandle will be true
  * when the message is completely sent.
  */
-IsoTpReceiveHandle isotp_receive(IsoTpShims* shims,
-        const uint32_t arbitration_id, IsoTpMessageReceivedHandler callback);
+IsoTpReceiveHandle isotp_receive(IsoTpShims* shims, const uint32_t tx_arbitration_id,
+        const uint32_t rx_arbitration_id, IsoTpMessageReceivedHandler callback);
 
 /* Public: Continue to receive a an ISO-TP message, based on a freshly
  * received CAN message.
@@ -77,7 +83,7 @@ IsoTpReceiveHandle isotp_receive(IsoTpShims* shims,
  */
 IsoTpMessage isotp_continue_receive(IsoTpShims* shims,
         IsoTpReceiveHandle* handle, const uint32_t arbitration_id,
-        const uint8_t data[], const uint8_t size);
+        const uint8_t data[], const uint8_t size, IsoTpMessage *pmsg);
 
 #ifdef __cplusplus
 }
